@@ -1,0 +1,7 @@
+{
+    "name": "grawity-media",
+    "private": true,
+    "dependencies": {
+        "googleapis": "^133.0.0"
+    }
+}

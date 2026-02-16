@@ -1,4 +1,4 @@
-import { google } from 'googleapis';
+const { google } = require('googleapis');
 
 module.exports = async function handler(req, res) {
     try {
@@ -35,4 +35,4 @@ module.exports = async function handler(req, res) {
         console.error(err);
         res.status(500).json({ error: 'Portfolio fetch failed' });
     }
-}
+};

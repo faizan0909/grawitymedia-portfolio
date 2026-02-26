@@ -24,7 +24,7 @@ module.exports = async function handler(req, res) {
         for (const folder of categories) {
             const filesRes = await drive.files.list({
                 q: `'${folder.id}' in parents and trashed=false and (mimeType contains 'image/' or mimeType contains 'video/')`,
-                fields: 'files(id,name,mimeType,thumbnailLink,description)',
+                fields: 'files(id,name,mimeType,thumbnailLink,description,webViewLink)',
             });
 
             items[folder.id] = filesRes.data.files || [];

@@ -45,12 +45,12 @@ class DriveCMS {
 
             this.cache = {
                 'mock-1': [
-                    { name: 'Neon Nights', description: 'Automotive Commercial', thumbnailLink: 'https://images.unsplash.com/photo-1542282088-fe8426682b8f?auto=format&fit=crop&q=80&w=800' },
-                    { name: 'Future Perfect', description: 'Tech Brand Anthem', thumbnailLink: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&q=80&w=800' }
+                    { name: 'Neon Nights', description: 'Automotive Commercial', mimeType: 'image/jpeg', thumbnailLink: 'https://images.unsplash.com/photo-1542282088-fe8426682b8f?auto=format&fit=crop&q=80&w=800' },
+                    { name: 'Future Perfect', description: 'Tech Brand Anthem', mimeType: 'video/mp4', thumbnailLink: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&q=80&w=800', webViewLink: 'https://www.youtube.com/embed/dQw4w9WgXcQ' } // Using youtube as mock video
                 ],
                 'mock-2': [
-                    { name: 'Echoes', description: 'Indie Artist Promo', thumbnailLink: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&q=80&w=800' },
-                    { name: 'The Void', description: 'Live Performance', thumbnailLink: 'https://images.unsplash.com/photo-1470229722913-7c090be5bcff?auto=format&fit=crop&q=80&w=800' }
+                    { name: 'Echoes', description: 'Indie Artist Promo', mimeType: 'image/jpeg', thumbnailLink: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&q=80&w=800' },
+                    { name: 'The Void', description: 'Live Performance', mimeType: 'video/mp4', thumbnailLink: 'https://images.unsplash.com/photo-1470229722913-7c090be5bcff?auto=format&fit=crop&q=80&w=800', webViewLink: 'https://www.youtube.com/embed/dQw4w9WgXcQ' }
                 ]
             };
         }
@@ -190,12 +190,34 @@ class DriveCMS {
         if (typeof lenis !== 'undefined') lenis.stop();
         document.body.style.overflow = 'hidden';
 
-        let mediaUrl = item.thumbnailLink ? item.thumbnailLink.replace('=s220', '=s0').replace('=s800', '=s0') : '';
+        const isVideo = item.mimeType && item.mimeType.includes('video/');
 
-        if (mediaUrl) {
-            this.modalContent.innerHTML = `<img src="${mediaUrl}" alt="${item.name}">`;
+        if (isVideo && item.webViewLink) {
+            // For Drive videos, we embed the preview player.
+            // Some modifications to the URL might be needed for perfect embedding, 
+            // but the webViewLink is generally the safest cross-domain approach.
+            let embedUrl = item.webViewLink.replace('/view', '/preview'); // Google Drive specific
+
+            // Mock YouTube URL handling for dev testing
+            if (embedUrl.includes('youtube')) embedUrl = item.webViewLink;
+
+            this.modalContent.innerHTML = `<iframe src="${embedUrl}" allowfullscreen frameborder="0" style="width: 80vw; height: 80vh;"></iframe>`;
         } else {
-            this.modalContent.innerHTML = `<div class="cms-error">Media not available</div>`;
+            // It's an image. Optimize loading by NOT using original size (=s0). 
+            // =s2048 gives up to 2K resolution which is plenty for 99% of screens and loads fast.
+            let mediaUrl = item.thumbnailLink ? item.thumbnailLink.replace('=s220', '=s2048').replace('=s800', '=s2048') : '';
+
+            if (mediaUrl) {
+                // Preload image gracefully to remove the loader right when it is ready
+                const img = new Image();
+                img.onload = () => {
+                    this.modalContent.innerHTML = '';
+                    this.modalContent.appendChild(img);
+                };
+                img.src = mediaUrl;
+            } else {
+                this.modalContent.innerHTML = `<div class="cms-error">Media not available</div>`;
+            }
         }
     }
 

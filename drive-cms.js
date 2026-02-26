@@ -122,6 +122,14 @@ class DriveCMS {
                 imgSrc = imgSrc.replace('=s220', '=s800');
             }
 
+            const isVideo = (item.mimeType && item.mimeType.includes('video/')) ||
+                (item.name && item.name.toLowerCase().match(/\.(mp4|mov|avi|mkv|webm)$/));
+
+            // Force mimeType for later use in openModal if it matched by extension
+            if (isVideo && !item.mimeType) {
+                item.mimeType = 'video/mp4';
+            }
+
             const card = document.createElement('article');
             card.className = 'project-card fade-in-up';
             card.style.animationDelay = `${index * 0.1}s`;
@@ -129,6 +137,7 @@ class DriveCMS {
             card.innerHTML = `
                 <div class="project-image">
                     <div class="placeholder-img" style="background-image:url('${imgSrc}')"></div>
+                    ${isVideo ? '<div class="video-indicator"><svg width="24" height="24" viewBox="0 0 24 24" fill="white"><path d="M8 5v14l11-7z"/></svg></div>' : ''}
                     <div class="project-overlay">
                         <h3 class="project-title">${item.name}</h3>
                         <p class="project-category">${item.description || 'View Project'}</p>
@@ -190,18 +199,24 @@ class DriveCMS {
         if (typeof lenis !== 'undefined') lenis.stop();
         document.body.style.overflow = 'hidden';
 
-        const isVideo = item.mimeType && item.mimeType.includes('video/');
+        const isVideo = (item.mimeType && item.mimeType.includes('video/')) ||
+            (item.name && item.name.toLowerCase().match(/\.(mp4|mov|avi|mkv|webm)$/));
 
         if (isVideo && item.webViewLink) {
             // For Drive videos, we embed the preview player.
-            // Some modifications to the URL might be needed for perfect embedding, 
-            // but the webViewLink is generally the safest cross-domain approach.
-            let embedUrl = item.webViewLink.replace('/view', '/preview'); // Google Drive specific
+            let embedUrl = item.webViewLink;
+
+            // Ensure google drive links use the /preview endpoint instead of /view
+            if (embedUrl.includes('drive.google.com') && embedUrl.includes('/view')) {
+                embedUrl = embedUrl.replace('/view', '/preview');
+            }
 
             // Mock YouTube URL handling for dev testing
             if (embedUrl.includes('youtube')) embedUrl = item.webViewLink;
 
-            this.modalContent.innerHTML = `<iframe src="${embedUrl}" allowfullscreen frameborder="0" style="width: 80vw; height: 80vh;"></iframe>`;
+            this.modalContent.innerHTML = `<iframe src="${embedUrl}" allow="autoplay" allowfullscreen frameborder="0" style="width: 80vw; height: 80vh; max-width: 1200px;"></iframe>`;
+        } else if (isVideo && !item.webViewLink) {
+            this.modalContent.innerHTML = `<div class="cms-error">Video link not found.<br>Ensure the Google Drive file is shared perfectly.</div>`;
         } else {
             // It's an image. Optimize loading by NOT using original size (=s0). 
             // =s2048 gives up to 2K resolution which is plenty for 99% of screens and loads fast.

@@ -4,6 +4,7 @@ class DriveCMS {
         this.cache = {};
         this.currentCategory = null;
         this.init();
+        this.initModal();
     }
 
     async init() {
@@ -135,6 +136,10 @@ class DriveCMS {
                 </div>
             `;
 
+            card.addEventListener('click', () => {
+                this.openModal(item);
+            });
+
             this.attachCursorEvents(card);
             grid.appendChild(card);
         });
@@ -151,5 +156,58 @@ class DriveCMS {
         el.addEventListener('mouseleave', () => {
             cursor.classList.remove('cursor-hover');
         });
+    }
+
+    initModal() {
+        this.modal = document.getElementById('media-modal');
+        this.modalContent = document.getElementById('modal-content');
+        this.closeBtn = document.querySelector('.modal-close');
+
+        if (!this.modal) return;
+
+        this.closeBtn.addEventListener('click', () => this.closeModal());
+
+        this.modal.addEventListener('click', (e) => {
+            if (e.target === this.modal) {
+                this.closeModal();
+            }
+        });
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && this.modal.classList.contains('open')) {
+                this.closeModal();
+            }
+        });
+    }
+
+    openModal(item) {
+        if (!this.modal) return;
+
+        this.modalContent.innerHTML = '<div class="cms-loader">Loading...</div>';
+        this.modal.classList.add('open');
+
+        // Remove Lenis scroll while modal is open
+        if (typeof lenis !== 'undefined') lenis.stop();
+        document.body.style.overflow = 'hidden';
+
+        let mediaUrl = item.thumbnailLink ? item.thumbnailLink.replace('=s220', '=s0').replace('=s800', '=s0') : '';
+
+        if (mediaUrl) {
+            this.modalContent.innerHTML = `<img src="${mediaUrl}" alt="${item.name}">`;
+        } else {
+            this.modalContent.innerHTML = `<div class="cms-error">Media not available</div>`;
+        }
+    }
+
+    closeModal() {
+        if (!this.modal) return;
+        this.modal.classList.remove('open');
+
+        if (typeof lenis !== 'undefined') lenis.start();
+        document.body.style.overflow = '';
+
+        setTimeout(() => {
+            this.modalContent.innerHTML = '';
+        }, 300);
     }
 }

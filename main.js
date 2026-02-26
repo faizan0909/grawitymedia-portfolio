@@ -158,4 +158,8 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
+    // Initialize CMS
+    if (typeof DriveCMS !== 'undefined') {
+        new DriveCMS();
+    }
 });

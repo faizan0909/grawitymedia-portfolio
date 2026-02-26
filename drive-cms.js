@@ -25,13 +25,34 @@ class DriveCMS {
 
     // === FETCH FROM VERCEL API ===
     async fetchPortfolioFromAPI() {
-        const response = await fetch('/api/portfolio');
-        if (!response.ok) {
-            throw new Error('Failed to fetch portfolio API');
+        try {
+            const response = await fetch('/api/portfolio');
+            if (!response.ok) {
+                throw new Error(`API returned ${response.status}`);
+            }
+            const data = await response.json();
+            this.categories = data.categories || [];
+            this.cache = data.items || {};
+        } catch (error) {
+            console.warn('Could not fetch from /api/portfolio, falling back to mock data for local testing.', error);
+
+            // Mock Data Fallback
+            this.categories = [
+                { id: 'mock-1', name: 'Commercials' },
+                { id: 'mock-2', name: 'Music Videos' }
+            ];
+
+            this.cache = {
+                'mock-1': [
+                    { name: 'Neon Nights', description: 'Automotive Commercial', thumbnailLink: 'https://images.unsplash.com/photo-1542282088-fe8426682b8f?auto=format&fit=crop&q=80&w=800' },
+                    { name: 'Future Perfect', description: 'Tech Brand Anthem', thumbnailLink: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&q=80&w=800' }
+                ],
+                'mock-2': [
+                    { name: 'Echoes', description: 'Indie Artist Promo', thumbnailLink: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&q=80&w=800' },
+                    { name: 'The Void', description: 'Live Performance', thumbnailLink: 'https://images.unsplash.com/photo-1470229722913-7c090be5bcff?auto=format&fit=crop&q=80&w=800' }
+                ]
+            };
         }
-        const data = await response.json();
-        this.categories = data.categories || [];
-        this.cache = data.items || {};
     }
 
     // === RENDERING ===
